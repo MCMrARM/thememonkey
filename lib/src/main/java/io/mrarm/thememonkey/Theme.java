@@ -12,7 +12,8 @@ public class Theme {
         AssetManager assetManager = AssetManagerReflectionHelper.create();
         ApplicationInfo applicationInfo = context.getApplicationInfo();
         AssetManagerReflectionHelper.addAssetPath(assetManager, applicationInfo.sourceDir);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP &&
+                applicationInfo.splitSourceDirs != null) {
             for (String path : applicationInfo.splitSourceDirs)
                 AssetManagerReflectionHelper.addAssetPath(assetManager, path);
         }
