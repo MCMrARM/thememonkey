@@ -62,9 +62,11 @@ public class MonkeyPatcher {
                     Field themeField = Resources.Theme.class.getDeclaredField("mThemeImpl");
                     themeField.setAccessible(true);
                     Object impl = themeField.get(theme);
-                    Field ma = impl.getClass().getDeclaredField("mAssets");
-                    ma.setAccessible(true);
-                    ma.set(impl, newAssetManager);
+                    if (impl != null) {
+                        Field ma = impl.getClass().getDeclaredField("mAssets");
+                        ma.setAccessible(true);
+                        ma.set(impl, newAssetManager);
+                    }
                 }
                 mt.set(activity, null);
 //                Method mtm = ContextThemeWrapper.class.getDeclaredMethod("initializeTheme");
