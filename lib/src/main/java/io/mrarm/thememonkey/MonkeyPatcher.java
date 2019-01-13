@@ -50,8 +50,10 @@ public class MonkeyPatcher {
                 implAssets.setAccessible(true);
                 implAssets.set(resourceImpl, newAssetManager);
             }
-            Resources.Theme theme = activity.getTheme();
             try {
+                Field mt = ContextThemeWrapper.class.getDeclaredField("mTheme");
+                mt.setAccessible(true);
+                Resources.Theme theme = (Resources.Theme) mt.get(activity);
                 try {
                     Field ma = Resources.Theme.class.getDeclaredField("mAssets");
                     ma.setAccessible(true);
@@ -64,12 +66,10 @@ public class MonkeyPatcher {
                     ma.setAccessible(true);
                     ma.set(impl, newAssetManager);
                 }
-                Field mt = ContextThemeWrapper.class.getDeclaredField("mTheme");
-                mt.setAccessible(true);
                 mt.set(activity, null);
-                Method mtm = ContextThemeWrapper.class.getDeclaredMethod("initializeTheme");
-                mtm.setAccessible(true);
-                mtm.invoke(activity);
+//                Method mtm = ContextThemeWrapper.class.getDeclaredMethod("initializeTheme");
+//                mtm.setAccessible(true);
+//                mtm.invoke(activity);
                 // As of API 24, mTheme is gone (but updates work without these changes
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                     Method mCreateTheme = AssetManager.class
