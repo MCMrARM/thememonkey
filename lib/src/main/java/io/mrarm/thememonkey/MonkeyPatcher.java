@@ -50,6 +50,7 @@ public class MonkeyPatcher {
                 implAssets.setAccessible(true);
                 implAssets.set(resourceImpl, newAssetManager);
             }
+            /*
             try {
                 Field mt = ContextThemeWrapper.class.getDeclaredField("mTheme");
                 mt.setAccessible(true);
@@ -86,6 +87,7 @@ public class MonkeyPatcher {
                 Log.e("MonkeyPatcher",
                         "Failed to update existing theme for activity " + activity, e);
             }
+            */
             pruneResourceCaches(resources);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
