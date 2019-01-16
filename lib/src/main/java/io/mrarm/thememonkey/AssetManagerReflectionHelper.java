@@ -13,15 +13,18 @@ class AssetManagerReflectionHelper {
     private static Method mEnsureStringBlocks;
 
     static {
+        Class<AssetManager> clz = AssetManager.class;
         try {
-            Class<AssetManager> clz = AssetManager.class;
             assetManagerConstructor = clz.getConstructor();
             mAddAssetPath = clz.getDeclaredMethod("addAssetPath", String.class);
             mAddAssetPath.setAccessible(true);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+        try {
             mEnsureStringBlocks = clz.getDeclaredMethod("ensureStringBlocks");
             mEnsureStringBlocks.setAccessible(true);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -42,6 +45,8 @@ class AssetManagerReflectionHelper {
     }
 
     static void ensureStringBlocks(AssetManager manager) {
+        if (mEnsureStringBlocks == null)
+            return;
         try {
             mEnsureStringBlocks.invoke(manager);
         } catch (Exception e) {
