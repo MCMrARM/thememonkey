@@ -23,10 +23,8 @@ import android.content.res.Resources;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.ArrayMap;
-import android.util.Log;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
-import android.view.ContextThemeWrapper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -44,11 +42,16 @@ public class MonkeyPatcher {
                 mAssets.set(resources, newAssetManager);
             } catch (Throwable ignore) {
                 Field mResourcesImpl = Resources.class.getDeclaredField("mResourcesImpl");
+                Class cResourcesImpl = Class.forName("android.content.res.ResourcesImpl");
+
+                Method mSetImpl = Resources.class.getDeclaredMethod("setImpl", cResourcesImpl);
                 mResourcesImpl.setAccessible(true);
                 Object resourceImpl = mResourcesImpl.get(resources);
                 Field implAssets = resourceImpl.getClass().getDeclaredField("mAssets");
                 implAssets.setAccessible(true);
                 implAssets.set(resourceImpl, newAssetManager);
+                mResourcesImpl.set(resources, null);
+                mSetImpl.invoke(resources, resourceImpl);
             }
             /*
             try {
