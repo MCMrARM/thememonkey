@@ -21,7 +21,7 @@ import android.app.Activity;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.ArrayMap;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
