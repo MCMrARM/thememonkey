@@ -19,13 +19,16 @@ package io.mrarm.thememonkey;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.os.Build;
 import androidx.annotation.NonNull;
 import android.util.ArrayMap;
+import android.util.DisplayMetrics;
 import android.util.LongSparseArray;
 import android.util.SparseArray;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
@@ -40,58 +43,21 @@ public class MonkeyPatcher {
                 Field mAssets = Resources.class.getDeclaredField("mAssets");
                 mAssets.setAccessible(true);
                 mAssets.set(resources, newAssetManager);
+
+                pruneResourceCaches(resources);
             } catch (Throwable ignore) {
-                Field mResourcesImpl = Resources.class.getDeclaredField("mResourcesImpl");
                 Class cResourcesImpl = Class.forName("android.content.res.ResourcesImpl");
+                Class cDisplayAdjustments = Class.forName("android.view.DisplayAdjustments");
+                Method mGetDisplayAdjustments = Resources.class.getDeclaredMethod("getDisplayAdjustments");
+                mGetDisplayAdjustments.setAccessible(true);
+
+                Constructor c = cResourcesImpl.getDeclaredConstructor(AssetManager.class, DisplayMetrics.class, Configuration.class, cDisplayAdjustments);
+                c.setAccessible(true);
+                Object newResourceImpl = c.newInstance(newAssetManager, resources.getDisplayMetrics(), resources.getConfiguration(), mGetDisplayAdjustments.invoke(resources));
 
                 Method mSetImpl = Resources.class.getDeclaredMethod("setImpl", cResourcesImpl);
-                mResourcesImpl.setAccessible(true);
-                Object resourceImpl = mResourcesImpl.get(resources);
-                Field implAssets = resourceImpl.getClass().getDeclaredField("mAssets");
-                implAssets.setAccessible(true);
-                implAssets.set(resourceImpl, newAssetManager);
-                mResourcesImpl.set(resources, null);
-                mSetImpl.invoke(resources, resourceImpl);
+                mSetImpl.invoke(resources, newResourceImpl);
             }
-            /*
-            try {
-                Field mt = ContextThemeWrapper.class.getDeclaredField("mTheme");
-                mt.setAccessible(true);
-                Resources.Theme theme = (Resources.Theme) mt.get(activity);
-                try {
-                    Field ma = Resources.Theme.class.getDeclaredField("mAssets");
-                    ma.setAccessible(true);
-                    ma.set(theme, newAssetManager);
-                } catch (NoSuchFieldException ignore) {
-                    Field themeField = Resources.Theme.class.getDeclaredField("mThemeImpl");
-                    themeField.setAccessible(true);
-                    Object impl = themeField.get(theme);
-                    if (impl != null) {
-                        Field ma = impl.getClass().getDeclaredField("mAssets");
-                        ma.setAccessible(true);
-                        ma.set(impl, newAssetManager);
-                    }
-                }
-                mt.set(activity, null);
-//                Method mtm = ContextThemeWrapper.class.getDeclaredMethod("initializeTheme");
-//                mtm.setAccessible(true);
-//                mtm.invoke(activity);
-                // As of API 24, mTheme is gone (but updates work without these changes
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-                    Method mCreateTheme = AssetManager.class
-                            .getDeclaredMethod("createTheme");
-                    mCreateTheme.setAccessible(true);
-                    Object internalTheme = mCreateTheme.invoke(newAssetManager);
-                    Field mTheme = Resources.Theme.class.getDeclaredField("mTheme");
-                    mTheme.setAccessible(true);
-                    mTheme.set(theme, internalTheme);
-                }
-            } catch (Throwable e) {
-                Log.e("MonkeyPatcher",
-                        "Failed to update existing theme for activity " + activity, e);
-            }
-            */
-            pruneResourceCaches(resources);
         } catch (Throwable e) {
             throw new IllegalStateException(e);
         }
@@ -125,17 +91,6 @@ public class MonkeyPatcher {
             } catch (Throwable ignore) {
             }
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Really should only be N; fix this as soon as it has its own API level
-            try {
-                Field mResourcesImpl = Resources.class.getDeclaredField("mResourcesImpl");
-                mResourcesImpl.setAccessible(true);
-                // For the remainder, use the ResourcesImpl instead, where all the fields
-                // now live
-                resources = mResourcesImpl.get(resources);
-            } catch (Throwable ignore) {
-            }
-        }
         // Prune bitmap and color state lists etc caches
         Object lock = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -165,11 +120,10 @@ public class MonkeyPatcher {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 pruneResourceCache(resources, "mAnimatorCache");
                 pruneResourceCache(resources, "mStateListAnimatorCache");
-            } else if (Build.VERSION.SDK_INT == Build.VERSION_CODES.KITKAT) {
-                pruneResourceCache(resources, "sPreloadedDrawables");
-                pruneResourceCache(resources, "sPreloadedColorDrawables");
-                pruneResourceCache(resources, "sPreloadedColorStateLists");
             }
+            pruneResourceCache(resources, "sPreloadedDrawables");
+            pruneResourceCache(resources, "sPreloadedColorDrawables");
+            pruneResourceCache(resources, "sPreloadedColorStateLists");
         }
     }
     @SuppressLint("NewApi")
