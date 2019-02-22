@@ -30,6 +30,10 @@ public class Theme {
         assetManager = createAssetManager(context, themeFile);
     }
 
+    public AssetManager getAssetManager() {
+        return assetManager;
+    }
+
     public void applyToActivity(Activity activity) {
         MonkeyPatcher.setActivityAssetManager(activity, assetManager);
         MonkeyPatcher.updateResourcesConfiguration(activity.getResources());
