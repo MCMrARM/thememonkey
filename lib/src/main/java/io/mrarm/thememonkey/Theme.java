@@ -24,7 +24,11 @@ public class Theme {
     }
 
 
-    private AssetManager assetManager;
+    private final AssetManager assetManager;
+
+    public Theme(AssetManager assetManager) {
+        this.assetManager = assetManager;
+    }
 
     public Theme(Context context, String themeFile) {
         assetManager = createAssetManager(context, themeFile);
